@@ -1,10 +1,10 @@
 #!/bin/bash
 # Nicotine - One-line installer
-# Usage: curl -sSL https://raw.githubusercontent.com/USER/nicotine/main/install-github.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/isomerc/nicotine/main/install-github.sh | bash
 
 set -e
 
-REPO="USER/nicotine"  # Update this with your GitHub username
+REPO="isomerc/nicotine" # Update this with your GitHub username
 INSTALL_DIR="$HOME/.local/bin"
 BINARY_NAME="nicotine"
 
@@ -14,24 +14,24 @@ echo
 # Detect architecture
 ARCH=$(uname -m)
 case $ARCH in
-    x86_64)
-        ARCH="x86_64"
-        ;;
-    aarch64|arm64)
-        ARCH="aarch64"
-        ;;
-    *)
-        echo "Unsupported architecture: $ARCH"
-        exit 1
-        ;;
+x86_64)
+  ARCH="x86_64"
+  ;;
+aarch64 | arm64)
+  ARCH="aarch64"
+  ;;
+*)
+  echo "Unsupported architecture: $ARCH"
+  exit 1
+  ;;
 esac
 
 echo "[1/4] Detecting latest release..."
 LATEST_URL=$(curl -sL "https://api.github.com/repos/$REPO/releases/latest" | grep "browser_download_url.*linux-$ARCH" | cut -d '"' -f 4)
 
 if [ -z "$LATEST_URL" ]; then
-    echo "Error: Could not find release for linux-$ARCH"
-    exit 1
+  echo "Error: Could not find release for linux-$ARCH"
+  exit 1
 fi
 
 echo "[2/4] Downloading nicotine..."
@@ -44,24 +44,24 @@ mv "/tmp/$BINARY_NAME" "$INSTALL_DIR/"
 
 # Add to PATH if needed
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-    echo "[4/4] Adding $INSTALL_DIR to PATH..."
-    SHELL_RC=""
-    if [ -n "$BASH_VERSION" ]; then
-        SHELL_RC="$HOME/.bashrc"
-    elif [ -n "$ZSH_VERSION" ]; then
-        SHELL_RC="$HOME/.zshrc"
-    fi
+  echo "[4/4] Adding $INSTALL_DIR to PATH..."
+  SHELL_RC=""
+  if [ -n "$BASH_VERSION" ]; then
+    SHELL_RC="$HOME/.bashrc"
+  elif [ -n "$ZSH_VERSION" ]; then
+    SHELL_RC="$HOME/.zshrc"
+  fi
 
-    if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
-        if ! grep -q "export PATH.*$INSTALL_DIR" "$SHELL_RC" 2>/dev/null; then
-            echo "" >> "$SHELL_RC"
-            echo "# Nicotine" >> "$SHELL_RC"
-            echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$SHELL_RC"
-            echo "Added to $SHELL_RC"
-        fi
+  if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
+    if ! grep -q "export PATH.*$INSTALL_DIR" "$SHELL_RC" 2>/dev/null; then
+      echo "" >>"$SHELL_RC"
+      echo "# Nicotine" >>"$SHELL_RC"
+      echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >>"$SHELL_RC"
+      echo "Added to $SHELL_RC"
     fi
+  fi
 else
-    echo "[4/4] PATH already configured"
+  echo "[4/4] PATH already configured"
 fi
 
 echo

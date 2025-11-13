@@ -205,30 +205,16 @@ fn main() -> Result<()> {
             println!("Stopping Nicotine...");
 
             // Kill all nicotine processes
-            let output = std::process::Command::new("pkill")
+            let _ = std::process::Command::new("pkill")
                 .arg("-9")
                 .arg("nicotine")
                 .output();
 
-            match output {
-                Ok(result) => {
-                    if result.status.success() {
-                        println!("✓ Nicotine stopped");
-                    } else {
-                        println!("No running Nicotine processes found");
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Error stopping Nicotine: {}", e);
-                    std::process::exit(1);
-                }
-            }
+            println!("✓ Nicotine stopped");
 
-            // Clean up socket file
-            let socket_path = "/tmp/nicotine.sock";
-            if std::path::Path::new(socket_path).exists() {
-                let _ = std::fs::remove_file(socket_path);
-            }
+            // Clean up socket and lock files
+            let _ = std::fs::remove_file("/tmp/nicotine.sock");
+            let _ = std::fs::remove_file("/tmp/nicotine-cycle.lock");
         }
 
         "init-config" => {
