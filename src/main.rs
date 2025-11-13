@@ -8,11 +8,14 @@ use anyhow::Result;
 use config::Config;
 use cycle_state::CycleState;
 use daemon::Daemon;
+use daemonize::Daemonize;
+use nix::fcntl::{flock, FlockArg};
 use overlay::run_overlay;
 use std::env;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
+use std::os::unix::io::AsRawFd;
 use std::sync::{Arc, Mutex};
 use x11_manager::X11Manager;
 
@@ -25,45 +28,43 @@ fn main() -> Result<()> {
 
     match command {
         "start" => {
-            // Fork and daemonize
-            unsafe {
-                let pid = libc::fork();
-                if pid < 0 {
-                    eprintln!("Failed to fork");
+            println!("Starting Nicotine...");
+
+            // Daemonize the process (safe Rust wrapper)
+            let daemonize = Daemonize::new()
+                .working_directory("/tmp")
+                .umask(0o027);
+
+            match daemonize.start() {
+                Ok(_) => {
+                    // We're now in the daemon process
+                    // Start daemon in background thread
+                    let x11_daemon = Arc::clone(&x11);
+                    std::thread::spawn(move || {
+                        let mut daemon = Daemon::new(x11_daemon);
+                        if let Err(e) = daemon.run() {
+                            eprintln!("Daemon error: {}", e);
+                        }
+                    });
+
+                    // Wait a bit for daemon to initialize
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+
+                    // Run overlay in main thread
+                    let state = Arc::new(Mutex::new(CycleState::new()));
+                    if let Ok(windows) = x11.get_eve_windows() {
+                        state.lock().unwrap().update_windows(windows);
+                    }
+
+                    if let Err(e) = run_overlay(x11, state, config.overlay_x, config.overlay_y, config) {
+                        eprintln!("Overlay error: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to daemonize: {}", e);
                     std::process::exit(1);
-                } else if pid > 0 {
-                    // Parent process - exit
-                    println!("Nicotine started (PID: {})", pid);
-                    println!("Use 'pkill nicotine' to stop");
-                    std::process::exit(0);
                 }
-                // Child process continues below
-
-                // Create new session
-                libc::setsid();
-            }
-
-            // Start daemon in background thread
-            let x11_daemon = Arc::clone(&x11);
-            std::thread::spawn(move || {
-                let mut daemon = Daemon::new(x11_daemon);
-                if let Err(e) = daemon.run() {
-                    eprintln!("Daemon error: {}", e);
-                }
-            });
-
-            // Wait a bit for daemon to initialize
-            std::thread::sleep(std::time::Duration::from_millis(100));
-
-            // Run overlay in main thread
-            let state = Arc::new(Mutex::new(CycleState::new()));
-            if let Ok(windows) = x11.get_eve_windows() {
-                state.lock().unwrap().update_windows(windows);
-            }
-
-            if let Err(e) = run_overlay(x11, state, config.overlay_x, config.overlay_y, config) {
-                eprintln!("Overlay error: {}", e);
-                std::process::exit(1);
             }
         }
 
@@ -133,8 +134,7 @@ fn main() -> Result<()> {
             };
 
             // Try to lock (non-blocking)
-            use std::os::unix::io::AsRawFd;
-            if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
+            if flock(file.as_raw_fd(), FlockArg::LockExclusiveNonblock).is_err() {
                 return Ok(()); // Already running, skip this cycle
             }
 
@@ -178,8 +178,7 @@ fn main() -> Result<()> {
             };
 
             // Try to lock (non-blocking)
-            use std::os::unix::io::AsRawFd;
-            if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
+            if flock(file.as_raw_fd(), FlockArg::LockExclusiveNonblock).is_err() {
                 return Ok(()); // Already running, skip this cycle
             }
 
