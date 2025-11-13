@@ -201,6 +201,36 @@ fn main() -> Result<()> {
             // Lock is automatically released when file is dropped
         }
 
+        "stop" => {
+            println!("Stopping Nicotine...");
+
+            // Kill all nicotine processes
+            let output = std::process::Command::new("pkill")
+                .arg("-9")
+                .arg("nicotine")
+                .output();
+
+            match output {
+                Ok(result) => {
+                    if result.status.success() {
+                        println!("✓ Nicotine stopped");
+                    } else {
+                        println!("No running Nicotine processes found");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error stopping Nicotine: {}", e);
+                    std::process::exit(1);
+                }
+            }
+
+            // Clean up socket file
+            let socket_path = "/tmp/nicotine.sock";
+            if std::path::Path::new(socket_path).exists() {
+                let _ = std::fs::remove_file(socket_path);
+            }
+        }
+
         "init-config" => {
             Config::save_default()?;
         }
@@ -210,6 +240,7 @@ fn main() -> Result<()> {
             println!();
             println!("Usage:");
             println!("  nicotine start         - Start everything (daemon + overlay)");
+            println!("  nicotine stop          - Stop all Nicotine processes");
             println!("  nicotine stack         - Stack all EVE windows");
             println!("  nicotine forward       - Cycle forward");
             println!("  nicotine backward      - Cycle backward");

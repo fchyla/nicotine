@@ -32,6 +32,7 @@ nicotine start    # Automatically runs in background
 
 ```bash
 nicotine start          # Start everything (daemon + overlay)
+nicotine stop           # Stop all Nicotine processes
 nicotine stack          # Stack all EVE windows
 nicotine forward        # Cycle to next client
 nicotine backward       # Cycle to previous client
