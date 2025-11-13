@@ -16,7 +16,7 @@ High-performance EVE Online multiboxing tool for X11/Linux, inspired by EVE-O Pr
 ### From Source
 
 ```bash
-git clone https://github.com/USER/nicotine
+git clone https://github.com/isomerc/nicotine
 cd nicotine
 ./install-local.sh
 ```
