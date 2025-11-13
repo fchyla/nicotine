@@ -6,18 +6,12 @@ High-performance EVE Online multiboxing tool for X11/Linux, inspired by EVE-O Pr
 
 - **Instant client cycling** with mouse buttons (forward/backward)
 - **Always-on-top overlay** showing all clients and their status
-- **Daemon architecture** for zero-latency window switching (~2ms vs ~50-100ms)
+- **Daemon architecture** for near-zero-latency window switching
 - **Auto-stack windows** to perfectly center multiple EVE clients
 - **Draggable overlay** with middle-mouse button
 - **Auto-detects display resolution** - works on any monitor setup
 
 ## Quick Install
-
-### From GitHub Releases (Recommended)
-
-```bash
-curl -sSL https://raw.githubusercontent.com/USER/nicotine/main/install-github.sh | bash
-```
 
 ### From Source
 
@@ -60,7 +54,7 @@ Then run `xbindkeys` to activate.
 
 ### Overlay Controls
 
-- **[R] Restack Windows** - Re-center all EVE clients
+- **Restack Windows** - Re-center all EVE clients
 - **Daemon status** - Green = running, Red = stopped
 - **Client list** - Shows all EVE clients with active indicator (>)
 - **Middle-click drag** - Move the overlay anywhere
