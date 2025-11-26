@@ -86,7 +86,13 @@ impl MouseListener {
         let mouse_device_path = self.config.mouse_device_path.clone();
 
         let handle = std::thread::spawn(move || {
-            match Self::run_listener(wm, state, forward_button, backward_button, mouse_device_path) {
+            match Self::run_listener(
+                wm,
+                state,
+                forward_button,
+                backward_button,
+                mouse_device_path,
+            ) {
                 Ok(_) => println!("Mouse listener stopped"),
                 Err(e) => eprintln!("Mouse listener error: {}", e),
             }
