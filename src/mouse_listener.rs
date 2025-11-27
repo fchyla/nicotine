@@ -122,6 +122,7 @@ impl MouseListener {
         let backward_button = self.config.backward_button;
         let mouse_device_name = self.config.mouse_device_name.clone();
         let mouse_device_path = self.config.mouse_device_path.clone();
+        let minimize_inactive = self.config.minimize_inactive;
 
         let handle = std::thread::spawn(move || {
             match Self::run_listener(
@@ -131,6 +132,7 @@ impl MouseListener {
                 backward_button,
                 mouse_device_name,
                 mouse_device_path,
+                minimize_inactive,
             ) {
                 Ok(_) => println!("Mouse listener stopped"),
                 Err(e) => eprintln!("Mouse listener error: {}", e),
@@ -147,6 +149,7 @@ impl MouseListener {
         backward_button: u16,
         mouse_device_name: Option<String>,
         mouse_device_path: Option<String>,
+        minimize_inactive: bool,
     ) -> Result<()> {
         let mut device = Self::find_mouse_device(
             mouse_device_name.as_deref(),
@@ -173,12 +176,12 @@ impl MouseListener {
                     if event.value() == 1 {
                         if code == forward_button {
                             println!("Forward button pressed");
-                            if let Err(e) = Self::cycle_forward(&wm, &state) {
+                            if let Err(e) = Self::cycle_forward(&wm, &state, minimize_inactive) {
                                 eprintln!("Failed to cycle forward: {}", e);
                             }
                         } else if code == backward_button {
                             println!("Backward button pressed");
-                            if let Err(e) = Self::cycle_backward(&wm, &state) {
+                            if let Err(e) = Self::cycle_backward(&wm, &state, minimize_inactive) {
                                 eprintln!("Failed to cycle backward: {}", e);
                             }
                         }
@@ -188,7 +191,11 @@ impl MouseListener {
         }
     }
 
-    fn cycle_forward(wm: &Arc<dyn WindowManager>, state: &Arc<Mutex<CycleState>>) -> Result<()> {
+    fn cycle_forward(
+        wm: &Arc<dyn WindowManager>,
+        state: &Arc<Mutex<CycleState>>,
+        minimize_inactive: bool,
+    ) -> Result<()> {
         let mut state = state.lock().unwrap();
 
         // Sync with active window first
@@ -196,11 +203,15 @@ impl MouseListener {
             state.sync_with_active(active);
         }
 
-        state.cycle_forward(&**wm)?;
+        state.cycle_forward(&**wm, minimize_inactive)?;
         Ok(())
     }
 
-    fn cycle_backward(wm: &Arc<dyn WindowManager>, state: &Arc<Mutex<CycleState>>) -> Result<()> {
+    fn cycle_backward(
+        wm: &Arc<dyn WindowManager>,
+        state: &Arc<Mutex<CycleState>>,
+        minimize_inactive: bool,
+    ) -> Result<()> {
         let mut state = state.lock().unwrap();
 
         // Sync with active window first
@@ -208,7 +219,7 @@ impl MouseListener {
             state.sync_with_active(active);
         }
 
-        state.cycle_backward(&**wm)?;
+        state.cycle_backward(&**wm, minimize_inactive)?;
         Ok(())
     }
 }

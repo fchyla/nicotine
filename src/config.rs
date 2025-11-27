@@ -24,6 +24,8 @@ pub struct Config {
     pub mouse_device_name: Option<String>,
     #[serde(default = "default_mouse_device_path")]
     pub mouse_device_path: Option<String>,
+    #[serde(default = "default_minimize_inactive")]
+    pub minimize_inactive: bool,
 }
 
 fn default_enable_mouse() -> bool {
@@ -48,6 +50,10 @@ fn default_mouse_device_name() -> Option<String> {
 
 fn default_mouse_device_path() -> Option<String> {
     None
+}
+
+fn default_minimize_inactive() -> bool {
+    false
 }
 
 impl Config {
@@ -111,6 +117,7 @@ impl Config {
             show_overlay: true,
             mouse_device_name: None,
             mouse_device_path: None,
+            minimize_inactive: false,
         };
 
         // Save the generated config
@@ -143,6 +150,7 @@ impl Config {
             show_overlay: true,
             mouse_device_name: None,
             mouse_device_path: None,
+            minimize_inactive: false,
         };
 
         if let Some(parent) = config_path.parent() {
@@ -179,6 +187,7 @@ mod tests {
             show_overlay: true,
             mouse_device_name: None,
             mouse_device_path: None,
+            minimize_inactive: false,
         };
 
         // Height should be: 1080 - 40 = 1040
@@ -201,6 +210,7 @@ mod tests {
             show_overlay: true,
             mouse_device_name: None,
             mouse_device_path: None,
+            minimize_inactive: false,
         };
 
         assert_eq!(config.eve_height_adjusted(), 1080);
@@ -222,6 +232,7 @@ mod tests {
             show_overlay: true,
             mouse_device_name: None,
             mouse_device_path: None,
+            minimize_inactive: false,
         };
 
         let toml_str = toml::to_string(&config).unwrap();
